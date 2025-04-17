@@ -3,6 +3,7 @@ import sqlite3
 from datetime import datetime
 import requests
 from functools import partial
+from PyQt6 import QtGui
 from PyQt6.QtWidgets import (
     QApplication, QWidget, QVBoxLayout, QHBoxLayout, QLabel,
     QPushButton, QLineEdit, QDateEdit, QTableWidget, QTableWidgetItem,
@@ -87,7 +88,7 @@ class TaskTracker(QWidget):
             border-radius: 4px;
         }  
         QCheckBox::indicator:checked {
-            background-color: #f3ecdb;
+            background-color: #e4d6c8;
             border: 0.5px solid #ccc;
         } 
         """)#CF9D9D
@@ -300,7 +301,20 @@ class TaskTracker(QWidget):
             delete_btn = QPushButton("☓")
             delete_btn.clicked.connect(lambda _, id=task_id: self.delete_task(id))
             self.table.setCellWidget(row_idx, 4, delete_btn)
-        self.table.blockSignals(False)
+
+            # Zmiana na skreslone i szare po zaznaczone jako gotowe
+            # UWAGA! Zmienia się dopiero po odświeżeniu
+            if completed:
+                for col in range(1, 4):  # tytuł, data, priorytet
+                    item = self.table.item(row_idx, col)
+                    if item:
+                        label = QLabel(item.text())
+                        label.setStyleSheet("color: gray; text-decoration: line-through; padding: 4px;")
+                        if col != 1:
+                            label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+                        self.table.setCellWidget(row_idx, col, label)
+
+        self.table.blockSignals(False) # zeby mozna było edtyowac bez problemow
 
     def delete_task(self, task_id):
         c.execute("DELETE FROM tasks WHERE id = ?", (task_id,))
